@@ -20,6 +20,17 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Database
+
+The Postgres schema is defined in `lib/db/schema.ts` with Drizzle ORM. Set `DATABASE_URL` to the Neon pooled connection string for application queries. Use `DATABASE_URL_UNPOOLED` for schema migrations:
+
+```bash
+npm run db:generate -- --name=describe-change
+npm run db:migrate
+```
+
+`db:generate` creates a checked-in SQL migration under `drizzle/`; `db:migrate` applies pending migrations and requires the direct `DATABASE_URL_UNPOOLED` value.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
