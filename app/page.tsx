@@ -351,6 +351,7 @@ export default function Home() {
         <img src="/LINK Logo White.svg" alt="LINK Team Hub" className="h-8 w-auto" />
         <nav aria-label="Account">
           <Button
+            nativeButton={false}
             render={<Link href="/login" />}
             variant="secondary"
             className="mt-2 bg-zinc-800 px-4 py-2 text-xs text-zinc-200 hover:bg-zinc-500 hover:text-blue-700"
@@ -443,8 +444,7 @@ export default function Home() {
 
       <section
         className="mx-auto mt-32 flex w-full max-w-6xl flex-col items-start justify-between gap-6 rounded-xl border border-[#1a2540] bg-[radial-gradient(ellipse_at_top_left,#142e70_0%,#0a1024_45%,#080d1b_90%)] px-6 py-10 sm:flex-row sm:items-center sm:px-12"
-        id="contact"
-      >
+        id="contact">
         <div>
           <h2 className="mb-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             Plan it. Schedule it. Perform it.
@@ -456,8 +456,7 @@ export default function Home() {
         <Button
           render={<Link href="#demo" />}
           size="lg"
-          className="h-10 rounded-md bg-blue-600 px-4 text-xs text-white hover:bg-blue-500"
-        >
+          className="h-10 rounded-md bg-blue-600 px-4 text-xs text-white hover:bg-blue-500">
           Request a walkthrough <ArrowRight size={16} aria-hidden="true" />
         </Button>
       </section>

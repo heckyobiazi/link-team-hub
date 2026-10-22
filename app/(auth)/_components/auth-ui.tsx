@@ -10,21 +10,17 @@ export function AuthCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="w-full max-w-105 rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/10 sm:p-10">
+    <section className="w-full max-w-105 rounded-2xl border border-blue-500 bg-linear-to-r from-black/50 to-blue-500 p-6 shadow-xl shadow-blue-900 sm:p-10">
       <Link
         className="inline-flex items-baseline gap-2 text-2xl font-bold tracking-tighter text-blue-700"
-        href="/"
-      >
-        LINK
-        <span className="text-[9px] font-semibold tracking-widest text-slate-500">
-          TEAM HUB
-        </span>
+        href="/">
+        <img src="/LINK Logo White.svg" alt="LINK Team Hub" className="h-8 w-auto" />
       </Link>
-      <h1 className="mt-8 mb-2 text-3xl leading-tight font-semibold tracking-tight">
+      <h1 className="mt-8 mb-2 text-white text-3xl leading-tight font-semibold tracking-tight">
         {title}
       </h1>
       {description && (
-        <p className="mb-7 text-sm leading-relaxed text-slate-500">
+        <p className="mb-7 text-sm leading-relaxed text-white">
           {description}
         </p>
       )}
@@ -47,11 +43,11 @@ export function AuthField({
 }: { label: string; id: string } & React.ComponentProps<"input">) {
   return (
     <div className="grid gap-2">
-      <label className="text-sm font-semibold text-slate-700" htmlFor={id}>
+      <label className="text-sm font-semibold text-white" htmlFor={id}>
         {label}
       </label>
       <input
-        className="min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-slate-900 focus:border-blue-600 focus:outline-3 focus:outline-blue-600/20"
+        className="min-h-11 w-full rounded-md border border-blue-300 bg-slate-500 px-3 py-2.5 text-white placeholder:text-white focus:border-blue-600 focus:outline-3 focus:outline-blue-600/20"
         id={id}
         name={id}
         {...props}
@@ -73,7 +69,7 @@ export function AuthSubmit({ children }: { children: React.ReactNode }) {
 
 export function AuthFooter({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-6 text-center text-sm text-slate-500 [&_a]:font-semibold [&_a]:text-blue-700 [&_a]:hover:underline">
+    <p className="mt-6 text-center text-sm text-white [&_a]:font-semibold [&_a]:text-black [&_a]:hover:underline">
       {children}
     </p>
   );
