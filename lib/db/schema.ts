@@ -43,6 +43,12 @@ export const calendarEventTypeEnum = pgEnum("calendar_event_type", [
 
 export const reportStatusEnum = pgEnum("report_status", ["draft", "submitted"]);
 
+export const conversationKindEnum = pgEnum("conversation_kind", [
+  "direct",
+  "section",
+  "group",
+]);
+
 export const teamMembers = pgTable(
   "team_members",
   {
@@ -221,6 +227,98 @@ export const notifications = pgTable(
   ],
 );
 
+export const auditLogs = pgTable(
+  "audit_logs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    actorId: uuid("actor_id").references(() => teamMembers.id, {
+      onDelete: "set null",
+    }),
+    action: varchar("action", { length: 80 }).notNull(),
+    entityType: varchar("entity_type", { length: 50 }).notNull(),
+    entityId: uuid("entity_id"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("audit_logs_actor_created_idx").on(table.actorId, table.createdAt),
+    index("audit_logs_created_at_idx").on(table.createdAt),
+  ],
+);
+
+export const conversations = pgTable(
+  "conversations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    kind: conversationKindEnum("kind").notNull(),
+    name: varchar("name", { length: 120 }),
+    sectionKey: varchar("section_key", { length: 160 }),
+    directKey: varchar("direct_key", { length: 80 }),
+    createdById: uuid("created_by_id").references(() => teamMembers.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("conversations_section_key_uidx").on(table.sectionKey),
+    uniqueIndex("conversations_direct_key_uidx").on(table.directKey),
+    index("conversations_kind_updated_idx").on(table.kind, table.updatedAt),
+  ],
+);
+
+export const conversationMembers = pgTable(
+  "conversation_members",
+  {
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    memberId: uuid("member_id")
+      .notNull()
+      .references(() => teamMembers.id, { onDelete: "cascade" }),
+    joinedAt: timestamp("joined_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    lastReadAt: timestamp("last_read_at", { withTimezone: true }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.conversationId, table.memberId] }),
+    index("conversation_members_member_idx").on(table.memberId),
+  ],
+);
+
+export const messages = pgTable(
+  "messages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    senderId: uuid("sender_id")
+      .notNull()
+      .references(() => teamMembers.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check(
+      "messages_body_length_check",
+      sql`char_length(${table.body}) BETWEEN 1 AND 2000`,
+    ),
+    index("messages_conversation_created_idx").on(
+      table.conversationId,
+      table.createdAt,
+    ),
+  ],
+);
+
 export const calendarEventAttendees = pgTable(
   "calendar_event_attendees",
   {
@@ -248,3 +346,7 @@ export type NewReport = typeof reports.$inferInsert;
 export type CalendarEvent = typeof calendarEvents.$inferSelect;
 export type NewCalendarEvent = typeof calendarEvents.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type Conversation = typeof conversations.$inferSelect;
+export type ConversationMember = typeof conversationMembers.$inferSelect;
+export type Message = typeof messages.$inferSelect;

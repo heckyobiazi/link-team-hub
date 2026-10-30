@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import {
+  auditLogs,
   calendarEvents,
   notifications,
   projects,
@@ -13,6 +14,20 @@ import {
   teamMembers,
 } from "@/lib/db/schema";
 import { protectedActionClient } from "@/lib/safe-action";
+
+async function logActivity(
+  actorId: string,
+  action: string,
+  entityType: string,
+  entityId?: string,
+) {
+  await db.insert(auditLogs).values({
+    actorId,
+    action,
+    entityType,
+    entityId: entityId ?? null,
+  });
+}
 
 const reportInput = z.object({
   id: z.string().uuid().optional(),
@@ -90,16 +105,29 @@ export const saveReport = protectedActionClient
         .returning({ id: reports.id });
     }
 
-    if (submit) {
-      await notify(
-        await managementRecipients(ctx.user.id),
+    const sideEffects = [
+      logActivity(
         ctx.user.id,
-        "report_submitted",
-        "A team report was submitted",
-        `${ctx.user.name} submitted a report for ${fields.reportDate}.`,
-        "/reports",
+        submit ? "report.submitted" : id ? "report.updated" : "report.created",
+        "report",
+        report.id,
+      ),
+    ];
+    if (submit) {
+      sideEffects.push(
+        managementRecipients(ctx.user.id).then((recipients) =>
+          notify(
+            recipients,
+            ctx.user.id,
+            "report_submitted",
+            "A team report was submitted",
+            `${ctx.user.name} submitted a report for ${fields.reportDate}.`,
+            "/reports",
+          ),
+        ),
       );
     }
+    await Promise.all(sideEffects);
 
     revalidatePath("/reports");
     revalidatePath("/dashboard");
@@ -120,6 +148,7 @@ export const deleteReport = protectedActionClient
       )
       .returning({ id: reports.id });
     if (!deleted) throw new Error("Report not found or not yours");
+    await logActivity(ctx.user.id, "report.deleted", "report", deleted.id);
     revalidatePath("/reports");
     revalidatePath("/dashboard");
     return { success: true };
@@ -150,14 +179,17 @@ export const createProject = protectedActionClient
       .select({ id: teamMembers.id })
       .from(teamMembers)
       .where(eq(teamMembers.isActive, true));
-    await notify(
-      members.map((member) => member.id),
-      ctx.user.id,
-      "project_created",
-      "A project was created",
-      `${ctx.user.name} created the project “${parsedInput.name}”.`,
-      "/projects",
-    );
+    await Promise.all([
+      logActivity(ctx.user.id, "project.created", "project", project.id),
+      notify(
+        members.map((member) => member.id),
+        ctx.user.id,
+        "project_created",
+        "A project was created",
+        `${ctx.user.name} created the project “${parsedInput.name}”.`,
+        "/projects",
+      ),
+    ]);
     revalidatePath("/projects");
     revalidatePath("/dashboard");
     revalidatePath("/notifications");
@@ -203,14 +235,17 @@ export const createTask = protectedActionClient
       })
       .returning({ id: tasks.id });
 
-    await notify(
-      [assignee.id],
-      ctx.user.id,
-      "task_assigned",
-      "You were assigned a task",
-      `${ctx.user.name} assigned you: ${parsedInput.title}`,
-      "/tasks",
-    );
+    await Promise.all([
+      logActivity(ctx.user.id, "task.assigned", "task", task.id),
+      notify(
+        [assignee.id],
+        ctx.user.id,
+        "task_assigned",
+        "You were assigned a task",
+        `${ctx.user.name} assigned you: ${parsedInput.title}`,
+        "/tasks",
+      ),
+    ]);
     revalidatePath("/tasks");
     revalidatePath("/dashboard");
     revalidatePath("/notifications");
@@ -241,17 +276,22 @@ export const updateTaskStatus = protectedActionClient
       .update(tasks)
       .set({ status: parsedInput.status, updatedAt: new Date() })
       .where(eq(tasks.id, task.id));
-
+    const sideEffects = [
+      logActivity(ctx.user.id, "task.status_updated", "task", task.id),
+    ];
     if (task.createdById) {
-      await notify(
-        [task.createdById],
-        ctx.user.id,
-        "task_updated",
-        "A task was updated",
-        `${ctx.user.name} changed “${task.title}” to ${parsedInput.status}.`,
-        "/tasks",
+      sideEffects.push(
+        notify(
+          [task.createdById],
+          ctx.user.id,
+          "task_updated",
+          "A task was updated",
+          `${ctx.user.name} changed “${task.title}” to ${parsedInput.status}.`,
+          "/tasks",
+        ),
       );
     }
+    await Promise.all(sideEffects);
     revalidatePath("/tasks");
     revalidatePath("/dashboard");
     revalidatePath("/notifications");
@@ -266,16 +306,20 @@ export const saveMemberProfile = protectedActionClient
     }),
   )
   .action(async ({ parsedInput, ctx }) => {
-    await db
-      .update(teamMembers)
-      .set({
-        jobTitle: parsedInput.jobTitle,
-        focus: parsedInput.focus || null,
-        updatedAt: new Date(),
-      })
-      .where(eq(teamMembers.id, ctx.user.id));
+    await Promise.all([
+      db
+        .update(teamMembers)
+        .set({
+          jobTitle: parsedInput.jobTitle,
+          focus: parsedInput.focus || null,
+          updatedAt: new Date(),
+        })
+        .where(eq(teamMembers.id, ctx.user.id)),
+      logActivity(ctx.user.id, "member.profile_updated", "team_member", ctx.user.id),
+    ]);
     revalidatePath("/team");
     revalidatePath("/dashboard");
+    revalidatePath("/messages");
     revalidatePath("/onboarding");
     return { success: true };
   });
@@ -285,10 +329,13 @@ export const updateAvailability = protectedActionClient
     z.object({ availability: z.enum(["available", "in_meeting", "away"]) }),
   )
   .action(async ({ parsedInput, ctx }) => {
-    await db
-      .update(teamMembers)
-      .set({ availability: parsedInput.availability, updatedAt: new Date() })
-      .where(eq(teamMembers.id, ctx.user.id));
+    await Promise.all([
+      db
+        .update(teamMembers)
+        .set({ availability: parsedInput.availability, updatedAt: new Date() })
+        .where(eq(teamMembers.id, ctx.user.id)),
+      logActivity(ctx.user.id, "member.availability_updated", "team_member", ctx.user.id),
+    ]);
     revalidatePath("/availability");
     revalidatePath("/team");
     revalidatePath("/dashboard");
@@ -314,14 +361,17 @@ export const updateMemberRole = protectedActionClient
       .where(eq(teamMembers.id, parsedInput.memberId))
       .returning({ id: teamMembers.id });
     if (!updated) throw new Error("Team member not found");
-    await notify(
-      [updated.id],
-      ctx.user.id,
-      "access_updated",
-      "Your workspace access changed",
-      `${ctx.user.name} changed your access level to ${parsedInput.role}.`,
-      "/team",
-    );
+    await Promise.all([
+      logActivity(ctx.user.id, "member.role_updated", "team_member", updated.id),
+      notify(
+        [updated.id],
+        ctx.user.id,
+        "access_updated",
+        "Your workspace access changed",
+        `${ctx.user.name} changed your access level to ${parsedInput.role}.`,
+        "/team",
+      ),
+    ]);
     revalidatePath("/team");
     revalidatePath("/settings");
     revalidatePath("/notifications");
@@ -358,10 +408,13 @@ export const createCalendarEvent = protectedActionClient
         createdById: ctx.user.id,
       })
       .returning({ id: calendarEvents.id });
-    const members = await db
-      .select({ id: teamMembers.id })
-      .from(teamMembers)
-      .where(eq(teamMembers.isActive, true));
+    const [members] = await Promise.all([
+      db
+        .select({ id: teamMembers.id })
+        .from(teamMembers)
+        .where(eq(teamMembers.isActive, true)),
+      logActivity(ctx.user.id, "calendar_event.created", "calendar_event", event.id),
+    ]);
     await notify(
       members.map((member) => member.id),
       ctx.user.id,
@@ -379,15 +432,18 @@ export const createCalendarEvent = protectedActionClient
 export const markNotificationRead = protectedActionClient
   .inputSchema(z.object({ id: z.string().uuid() }))
   .action(async ({ parsedInput, ctx }) => {
-    await db
-      .update(notifications)
-      .set({ readAt: new Date() })
-      .where(
-        and(
-          eq(notifications.id, parsedInput.id),
-          eq(notifications.recipientId, ctx.user.id),
+    await Promise.all([
+      db
+        .update(notifications)
+        .set({ readAt: new Date() })
+        .where(
+          and(
+            eq(notifications.id, parsedInput.id),
+            eq(notifications.recipientId, ctx.user.id),
+          ),
         ),
-      );
+      logActivity(ctx.user.id, "notification.read", "notification", parsedInput.id),
+    ]);
     revalidatePath("/notifications");
     revalidatePath("/dashboard");
     revalidatePath("/dashboard", "layout");
@@ -397,15 +453,18 @@ export const markNotificationRead = protectedActionClient
 export const markAllNotificationsRead = protectedActionClient
   .inputSchema(z.object({}))
   .action(async ({ ctx }) => {
-    await db
-      .update(notifications)
-      .set({ readAt: new Date() })
-      .where(
-        and(
-          eq(notifications.recipientId, ctx.user.id),
-          isNull(notifications.readAt),
+    await Promise.all([
+      db
+        .update(notifications)
+        .set({ readAt: new Date() })
+        .where(
+          and(
+            eq(notifications.recipientId, ctx.user.id),
+            isNull(notifications.readAt),
+          ),
         ),
-      );
+      logActivity(ctx.user.id, "notifications.marked_read", "notification"),
+    ]);
     revalidatePath("/notifications");
     revalidatePath("/dashboard");
     revalidatePath("/dashboard", "layout");

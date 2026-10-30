@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createCalendarEvent } from "@/app/actions/workspace";
 
 export function CalendarEventForm() {
-  const router = useRouter();
   const [type, setType] = useState<"meeting" | "review" | "deadline">("meeting");
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
@@ -33,7 +31,6 @@ export function CalendarEventForm() {
       if (result?.data?.success) {
         setMessage("Event saved.");
         form.reset();
-        router.refresh();
       } else setMessage(result?.serverError ?? "Check the event details and try again.");
     });
   }

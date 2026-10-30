@@ -9,15 +9,13 @@ import { workspaceRoutes, type Role } from "./routes";
 const rolePriority: readonly Role[] = ["admin", "executive", "lead", "member"];
 
 async function getKindeIdentity() {
-  const { isAuthenticated, getUser, getRoles } = getKindeServerSession();
+  const { isAuthenticated, getUser } = getKindeServerSession();
 
   if (!(await isAuthenticated())) return null;
 
-  const [user, kindeRoles] = await Promise.all([getUser(), getRoles()]);
+  const user = await getUser();
   if (!user?.id) return null;
 
-  const keys = new Set((kindeRoles ?? []).map((role) => role.key));
-  const initialRole = rolePriority.find((role) => keys.has(role)) ?? "member";
   const name =
     [user.given_name, user.family_name].filter(Boolean).join(" ") ||
     user.email ||
@@ -27,7 +25,6 @@ async function getKindeIdentity() {
     kindeUserId: user.id,
     name,
     email: user.email ?? null,
-    initialRole,
   };
 }
 
@@ -44,13 +41,17 @@ export const getAuthenticatedMember = cache(
 
     let member = existing;
     if (!member) {
+      const { getRoles } = getKindeServerSession();
+      const kindeRoles = await getRoles();
+      const keys = new Set((kindeRoles ?? []).map((role) => role.key));
+      const initialRole = rolePriority.find((role) => keys.has(role)) ?? "member";
       const [created] = await db
         .insert(teamMembers)
         .values({
           kindeUserId: identity.kindeUserId,
           name: identity.name,
           email: identity.email,
-          role: identity.initialRole,
+          role: initialRole,
         })
         .onConflictDoNothing({ target: teamMembers.kindeUserId })
         .returning();

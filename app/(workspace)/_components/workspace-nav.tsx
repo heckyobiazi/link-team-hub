@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   LineChart,
   ListChecks,
+  MessageCircle,
   Settings,
   Users,
   type LucideIcon,
@@ -27,6 +28,7 @@ const icons: Record<string, LucideIcon> = {
   "/meeting": CalendarClock,
   "/availability": Clock,
   "/notifications": Bell,
+  "/messages": MessageCircle,
   "/overview": LineChart,
   "/settings": Settings,
 };

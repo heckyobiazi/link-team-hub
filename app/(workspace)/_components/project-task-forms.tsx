@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,7 +16,6 @@ import { createProject, createTask, updateTaskStatus } from "@/app/actions/works
 type Option = { id: string; name: string };
 
 export function ProjectForm() {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
 
@@ -35,7 +33,6 @@ export function ProjectForm() {
       if (result?.data?.success) {
         setMessage("Project created.");
         form.reset();
-        router.refresh();
       } else setMessage(result?.serverError ?? "Please check the form and try again.");
     });
   }
@@ -63,7 +60,6 @@ export function ProjectForm() {
 }
 
 export function TaskForm({ projects, members }: { projects: Option[]; members: Option[] }) {
-  const router = useRouter();
   const [projectId, setProjectId] = useState(projects[0]?.id ?? "");
   const [assigneeId, setAssigneeId] = useState(members[0]?.id ?? "");
   const [pending, startTransition] = useTransition();
@@ -85,7 +81,6 @@ export function TaskForm({ projects, members }: { projects: Option[]; members: O
       if (result?.data?.success) {
         setMessage("Task assigned.");
         form.reset();
-        router.refresh();
       } else setMessage(result?.serverError ?? "Please check the form and try again.");
     });
   }
@@ -130,7 +125,6 @@ export function TaskForm({ projects, members }: { projects: Option[]; members: O
 }
 
 export function TaskStatusSelect({ id, status }: { id: string; status: "todo" | "in-progress" | "blocked" | "done" }) {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
 
@@ -138,8 +132,7 @@ export function TaskStatusSelect({ id, status }: { id: string; status: "todo" | 
     setError("");
     startTransition(async () => {
       const result = await updateTaskStatus({ id, status: nextStatus });
-      if (result?.data?.success) router.refresh();
-      else setError(result?.serverError ?? "Could not update task.");
+      if (!result?.data?.success) setError(result?.serverError ?? "Could not update task.");
     });
   }
 

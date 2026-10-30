@@ -1,20 +1,17 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { markAllNotificationsRead, markNotificationRead } from "@/app/actions/workspace";
 
 export function MarkNotificationRead({ id }: { id: string }) {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
 
   function markRead() {
     startTransition(async () => {
       const result = await markNotificationRead({ id });
-      if (result?.data?.success) router.refresh();
-      else setError(result?.serverError ?? "Could not update notification.");
+      if (!result?.data?.success) setError(result?.serverError ?? "Could not update notification.");
     });
   }
 
@@ -29,7 +26,6 @@ export function MarkNotificationRead({ id }: { id: string }) {
 }
 
 export function MarkAllNotificationsRead() {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
 
@@ -39,7 +35,6 @@ export function MarkAllNotificationsRead() {
       const result = await markAllNotificationsRead({});
       if (result?.data?.success) {
         setMessage("All caught up.");
-        router.refresh();
       } else setMessage(result?.serverError ?? "Could not update notifications.");
     });
   }

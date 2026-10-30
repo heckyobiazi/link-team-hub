@@ -43,7 +43,6 @@ export function ProfileSetupForm({
       });
       if (result?.data?.success) {
         setMessage("Profile saved.");
-        router.refresh();
         if (onboarding) router.push("/dashboard");
       } else setMessage(result?.serverError ?? "Please choose a job title.");
     });
@@ -88,7 +87,6 @@ export function MemberRoleSelect({
   role: AccessRole;
   disabled?: boolean;
 }) {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [value, setValue] = useState<AccessRole>(role);
   const [error, setError] = useState("");
@@ -99,8 +97,7 @@ export function MemberRoleSelect({
     setError("");
     startTransition(async () => {
       const result = await updateMemberRole({ memberId, role: nextRole });
-      if (result?.data?.success) router.refresh();
-      else {
+      if (!result?.data?.success) {
         setValue(previous);
         setError(result?.serverError ?? "Could not update access.");
       }
@@ -124,7 +121,6 @@ export function MemberRoleSelect({
 }
 
 export function AvailabilitySelect({ availability }: { availability: "available" | "in_meeting" | "away" }) {
-  const router = useRouter();
   const [value, setValue] = useState(availability);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
@@ -135,8 +131,7 @@ export function AvailabilitySelect({ availability }: { availability: "available"
     setMessage("");
     startTransition(async () => {
       const result = await updateAvailability({ availability: next });
-      if (result?.data?.success) router.refresh();
-      else {
+      if (!result?.data?.success) {
         setValue(previous);
         setMessage(result?.serverError ?? "Could not save availability.");
       }

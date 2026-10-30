@@ -19,11 +19,11 @@ export function InviteMemberForm() {
     startTransition(async () => {
       const result = await inviteTeamMember({ email });
       if (result?.data?.success) {
-        setMessage(`Kinde created an invitation for ${result.data.email}. They should receive an email with a secure sign-up link.`);
+        setMessage(`Kinde created an invitation for ${email}. They should receive an email with a secure sign-up link.`);
         setEmail("");
       } else if (result?.data && "error" in result.data) {
         setIsError(true);
-        setMessage(result.data.error);
+        setMessage(result.data.error ?? "Could not send the invitation.");
       } else {
         setIsError(true);
         setMessage(result?.serverError ?? "Could not send the invitation.");

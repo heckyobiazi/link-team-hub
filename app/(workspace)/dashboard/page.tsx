@@ -1,19 +1,25 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, max } from "drizzle-orm";
 import { AlertCircle, CheckCircle2, FileCheck2, Users } from "lucide-react";
 import { db } from "@/lib/db";
-import { projects, reports, tasks, teamMembers } from "@/lib/db/schema";
+import { auditLogs, projects, reports, tasks, teamMembers } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { Panel } from "../_components/ui";
 import { WorkspacePageFallback } from "../_components/workspace-page-fallback";
+import { TeamAvailabilityList } from "../_components/team-availability-list";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 async function DashboardContent() {
   const user = await getCurrentUser();
   const today = new Date().toISOString().slice(0, 10);
+  const activityByMember = db
+    .select({ actorId: auditLogs.actorId, lastActivityAt: max(auditLogs.createdAt).as("last_activity_at") })
+    .from(auditLogs)
+    .groupBy(auditLogs.actorId)
+    .as("activity_by_member");
   const [activeCount, submittedToday, taskCount, doneCount, blockedCount, updates, availability, projectRows, projectTaskRows, blockers] = await Promise.all([
     db.select({ total: count() }).from(teamMembers).where(eq(teamMembers.isActive, true)),
     db.select({ total: count() }).from(reports).where(and(eq(reports.reportDate, today), eq(reports.status, "submitted"))),
@@ -28,8 +34,9 @@ async function DashboardContent() {
       .orderBy(desc(reports.submittedAt))
       .limit(4),
     db
-      .select({ id: teamMembers.id, name: teamMembers.name, jobTitle: teamMembers.jobTitle, availability: teamMembers.availability })
+      .select({ id: teamMembers.id, name: teamMembers.name, jobTitle: teamMembers.jobTitle, availability: teamMembers.availability, lastActivityAt: activityByMember.lastActivityAt, updatedAt: teamMembers.updatedAt })
       .from(teamMembers)
+      .leftJoin(activityByMember, eq(teamMembers.id, activityByMember.actorId))
       .where(eq(teamMembers.isActive, true))
       .orderBy(teamMembers.name)
       .limit(6),
@@ -56,7 +63,13 @@ async function DashboardContent() {
     { label: "Tasks completed", value: doneCount[0].total, note: `Across ${taskCount[0].total} tasks`, icon: CheckCircle2 },
     { label: "Open blockers", value: blockedCount[0].total, note: "Tasks marked blocked", icon: AlertCircle },
   ];
-  const availableCount = availability.filter((member) => member.availability === "available").length;
+  const now = Date.now();
+  const availabilityMembers = availability.map((member) => ({
+    id: member.id,
+    name: member.name,
+    availability: member.availability,
+    lastActivityAt: (member.lastActivityAt ?? member.updatedAt).getTime(),
+  }));
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -97,17 +110,7 @@ async function DashboardContent() {
         </Panel>
 
         <Panel title="Team availability">
-          <p className="text-xs text-slate-400">{availableCount} available among the {availability.length} members shown</p>
-          <ul className="mt-4 grid gap-3">
-            {availability.map((member) => (
-              <li className="flex items-center gap-3 text-sm" key={member.id}>
-                <span aria-hidden className="grid size-8 place-items-center rounded-full bg-white text-[10px] font-bold text-blue-700">{member.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</span>
-                <span className="flex-1 text-slate-100">{member.name}{member.id === user.id ? " (you)" : ""}</span>
-                <span className="text-xs capitalize text-slate-400">{member.availability.replace("_", " ")}</span>
-              </li>
-            ))}
-          </ul>
-          <Link className="mt-4 inline-block text-xs text-cyan-300 hover:underline" href="/availability">Update my status →</Link>
+          <TeamAvailabilityList members={availabilityMembers} currentUserId={user.id} initialNow={now} />
         </Panel>
       </div>
 

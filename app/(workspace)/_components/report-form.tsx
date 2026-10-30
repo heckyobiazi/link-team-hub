@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,7 +27,6 @@ type ReportValue = {
 };
 
 export function ReportForm({ report }: { report?: ReportValue }) {
-  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
@@ -50,7 +48,6 @@ export function ReportForm({ report }: { report?: ReportValue }) {
       if (result?.data?.success) {
         setMessage(submit ? "Report submitted." : "Draft saved.");
         if (!report) form.reset();
-        router.refresh();
       } else {
         setMessage(result?.serverError ?? "Please check the fields and try again.");
       }
@@ -117,7 +114,6 @@ export function ReportForm({ report }: { report?: ReportValue }) {
 }
 
 export function DeleteReportButton({ id }: { id: string }) {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
@@ -128,7 +124,6 @@ export function DeleteReportButton({ id }: { id: string }) {
       const result = await deleteReport({ id });
       if (result?.data?.success) {
         setOpen(false);
-        router.refresh();
       }
       else setError(result?.serverError ?? "Could not delete this report.");
     });

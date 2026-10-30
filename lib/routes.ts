@@ -17,6 +17,7 @@ export const workspaceRoutes = [
   { href: "/meeting", label: "Meetings" },
   { href: "/availability", label: "Availability" },
   { href: "/notifications", label: "Notifications" },
+  { href: "/messages", label: "Messages" },
   {
     href: "/overview",
     label: "Management Overview",
