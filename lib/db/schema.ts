@@ -41,6 +41,8 @@ export const calendarEventTypeEnum = pgEnum("calendar_event_type", [
   "deadline",
 ]);
 
+export const reportStatusEnum = pgEnum("report_status", ["draft", "submitted"]);
+
 export const teamMembers = pgTable(
   "team_members",
   {
@@ -48,6 +50,7 @@ export const teamMembers = pgTable(
     kindeUserId: varchar("kinde_user_id", { length: 255 }).notNull(),
     name: varchar("name", { length: 160 }).notNull(),
     email: varchar("email", { length: 320 }),
+    jobTitle: varchar("job_title", { length: 120 }),
     role: memberRoleEnum("role").default("member").notNull(),
     focus: varchar("focus", { length: 120 }),
     availability: memberAvailabilityEnum("availability")
@@ -107,6 +110,9 @@ export const tasks = pgTable(
     assigneeId: uuid("assignee_id").references(() => teamMembers.id, {
       onDelete: "set null",
     }),
+    createdById: uuid("created_by_id").references(() => teamMembers.id, {
+      onDelete: "set null",
+    }),
     title: varchar("title", { length: 240 }).notNull(),
     description: text("description"),
     dueDate: date("due_date"),
@@ -136,6 +142,8 @@ export const reports = pgTable(
     completed: text("completed").notNull(),
     nextSteps: text("next_steps").notNull(),
     blockers: text("blockers"),
+    status: reportStatusEnum("status").default("draft").notNull(),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -158,6 +166,7 @@ export const calendarEvents = pgTable(
     type: calendarEventTypeEnum("type").notNull(),
     startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
     endsAt: timestamp("ends_at", { withTimezone: true }),
+    meetingUrl: varchar("meeting_url", { length: 2048 }),
     projectId: uuid("project_id").references(() => projects.id, {
       onDelete: "set null",
     }),
@@ -178,6 +187,37 @@ export const calendarEvents = pgTable(
     ),
     index("calendar_events_starts_at_idx").on(table.startsAt),
     index("calendar_events_project_id_idx").on(table.projectId),
+  ],
+);
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    recipientId: uuid("recipient_id")
+      .notNull()
+      .references(() => teamMembers.id, { onDelete: "cascade" }),
+    actorId: uuid("actor_id").references(() => teamMembers.id, {
+      onDelete: "set null",
+    }),
+    type: varchar("type", { length: 40 }).notNull(),
+    title: varchar("title", { length: 180 }).notNull(),
+    message: text("message").notNull(),
+    href: varchar("href", { length: 255 }),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("notifications_recipient_created_idx").on(
+      table.recipientId,
+      table.createdAt,
+    ),
+    index("notifications_recipient_read_idx").on(
+      table.recipientId,
+      table.readAt,
+    ),
   ],
 );
 
@@ -207,3 +247,4 @@ export type Report = typeof reports.$inferSelect;
 export type NewReport = typeof reports.$inferInsert;
 export type CalendarEvent = typeof calendarEvents.$inferSelect;
 export type NewCalendarEvent = typeof calendarEvents.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;

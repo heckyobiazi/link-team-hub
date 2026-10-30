@@ -1,56 +1,40 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import Link from "next/link";
+import { count, eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { teamMembers } from "@/lib/db/schema";
 import { requireRole } from "@/lib/auth";
 import { PageHeader } from "../_components/page-header";
 import { Panel } from "../_components/ui";
-import { members } from "@/lib/sample-data";
+import { WorkspacePageFallback } from "../_components/workspace-page-fallback";
 
 export const metadata: Metadata = { title: "Settings" };
 
-export default async function SettingsPage() {
+async function SettingsContent() {
   await requireRole(["admin"]);
+  const [memberTotal] = await db
+    .select({ total: count() })
+    .from(teamMembers)
+    .where(eq(teamMembers.isActive, true));
 
   return (
     <>
-      <PageHeader
-        title="Settings"
-        description="Keep workspace access clear and accountable."
-      />
+      <PageHeader title="Settings" description="Manage workspace access and team roles." />
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="Workspace">
-          <form className="grid gap-4">
-            <div className="grid gap-1.5">
-              <label className="text-xs text-slate-400" htmlFor="workspace-name">
-                Workspace name
-              </label>
-              <input
-                className="min-h-10 rounded-md border border-slate-500/30 bg-transparent px-3 text-sm focus:border-blue-500 focus:outline-none"
-                defaultValue="LINK Team Hub"
-                id="workspace-name"
-                name="workspace-name"
-              />
-            </div>
-            <button
-              className="min-h-10 w-fit cursor-pointer rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700"
-              type="submit"
-            >
-              Save changes
-            </button>
-          </form>
+          <p className="text-sm text-slate-300">LINK Team Hub</p>
+          <p className="mt-2 text-sm text-slate-400">{memberTotal.total} active team members are connected to this workspace.</p>
         </Panel>
-
-        <Panel title="Members and roles">
-          <ul className="grid gap-3">
-            {members.map((m) => (
-              <li className="flex items-center justify-between text-sm" key={m.id}>
-                <span>{m.name}</span>
-                <span className="rounded-full bg-slate-500/20 px-2.5 py-0.5 text-xs text-slate-300">
-                  {m.role}
-                </span>
-              </li>
-            ))}
-          </ul>
+        <Panel title="Roles and access">
+          <p className="text-sm text-slate-300">New accounts join as members. Admins can grant lead, executive, or admin access from the Team page.</p>
+          <Link className="mt-4 inline-flex rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500" href="/team">Manage team roles</Link>
         </Panel>
       </div>
     </>
   );
+}
+
+export default function SettingsPage() {
+  return <Suspense fallback={<WorkspacePageFallback />}><SettingsContent /></Suspense>;
 }

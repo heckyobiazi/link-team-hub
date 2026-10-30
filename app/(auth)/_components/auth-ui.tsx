@@ -4,13 +4,20 @@ export function AuthCard({
   title,
   description,
   children,
+  variant = "default",
 }: {
   title: string;
   description?: string;
   children: React.ReactNode;
+  variant?: "default" | "glass";
 }) {
+  const surfaceClass =
+    variant === "glass"
+      ? "auth-card-glass relative z-10"
+      : "border border-blue-500 bg-linear-to-r from-black/50 to-blue-500 shadow-xl shadow-blue-900";
+
   return (
-    <section className="w-full max-w-105 rounded-2xl border border-blue-500 bg-linear-to-r from-black/50 to-blue-500 p-6 shadow-xl shadow-blue-900 sm:p-10">
+    <section className={`w-full max-w-105 rounded-2xl p-6 sm:p-10 ${surfaceClass}`}>
       <Link
         className="inline-flex items-baseline gap-2 text-2xl font-bold tracking-tighter text-blue-700"
         href="/">
@@ -69,7 +76,7 @@ export function AuthSubmit({ children }: { children: React.ReactNode }) {
 
 export function AuthFooter({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-6 text-center text-sm text-white [&_a]:font-semibold [&_a]:text-black [&_a]:hover:underline">
+    <p className="mt-6 text-center text-sm text-white [&_a]:font-semibold [&_a]:text-blue-500 [&_a]:hover:underline">
       {children}
     </p>
   );

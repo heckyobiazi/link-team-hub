@@ -9,19 +9,23 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <AuthCard
-      title="Log in"
-      description="Welcome back. Log in to your team hub."
-    >
-      <LoginLink
-        className={authButtonClass}
-        postLoginRedirectURL="/dashboard"
+    <>
+      <div aria-hidden className="login-atmosphere fixed inset-0 z-0" />
+      <AuthCard
+        title="Log in"
+        description="Welcome back. Log in to your team hub."
+        variant="glass"
       >
-        Continue to log in
-      </LoginLink>
-      <AuthFooter>
-        Don&apos;t have an account? <Link href="/signup">Sign up</Link>
-      </AuthFooter>
-    </AuthCard>
+        <LoginLink
+          className={authButtonClass}
+          postLoginRedirectURL="/dashboard"
+        >
+          Continue to log in
+        </LoginLink>
+        <AuthFooter>
+          Don&apos;t have an account? <Link href="/signup">Sign up</Link>
+        </AuthFooter>
+      </AuthCard>
+    </>
   );
 }

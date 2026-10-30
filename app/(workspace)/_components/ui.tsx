@@ -1,12 +1,28 @@
-import { statusLabels, statusStyles, type Status } from "@/lib/sample-data";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import type { workStatusEnum } from "@/lib/db/schema";
+
+type Status = (typeof workStatusEnum.enumValues)[number];
+
+const statusStyles: Record<Status, string> = {
+  todo: "bg-slate-500/20 text-slate-300",
+  "in-progress": "bg-blue-500/20 text-blue-300",
+  blocked: "bg-red-500/20 text-red-300",
+  done: "bg-emerald-500/20 text-emerald-300",
+};
+
+const statusLabels: Record<Status, string> = {
+  todo: "To do",
+  "in-progress": "In progress",
+  blocked: "Blocked",
+  done: "Done",
+};
 
 export function StatusBadge({ status }: { status: Status }) {
   return (
-    <span
-      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusStyles[status]}`}
-    >
+    <Badge className={`h-auto border-0 ${statusStyles[status]}`} variant="outline">
       {statusLabels[status]}
-    </span>
+    </Badge>
   );
 }
 
@@ -18,10 +34,10 @@ export function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-slate-500/20 bg-slate-500/10 p-5">
+    <Card className="rounded-xl border border-slate-500/20 bg-slate-500/10 p-5 text-slate-200">
       {title && <h2 className="mb-4 text-sm font-semibold text-white">{title}</h2>}
-      {children}
-    </section>
+      <CardContent className="p-0">{children}</CardContent>
+    </Card>
   );
 }
 

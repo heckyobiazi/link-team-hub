@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { LogOut } from "lucide-react";
 import { LogoutLink } from "@kinde-oss/kinde-auth-nextjs/server";
-import { getCurrentUser, visibleRoutes } from "@/lib/auth";
+import { getCurrentUser, getUnreadNotificationCount, visibleRoutes } from "@/lib/auth";
 import { WorkspaceNav } from "./_components/workspace-nav";
 import { WorkspaceTopbar } from "./_components/workspace-topbar";
 
@@ -24,6 +24,7 @@ const roleLabels = {
 // Reads the signed-in user, so it must render inside a Suspense boundary.
 async function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
+  const unreadCount = await getUnreadNotificationCount(user.id);
   const routes = visibleRoutes(user.role).map(({ href, label }) => ({ href, label }));
 
   return (
@@ -35,7 +36,7 @@ async function WorkspaceShell({ children }: { children: React.ReactNode }) {
           <img src="/LINK Logo White.svg" alt="LINK Team Hub" className="h-26 w-26" />
         </Link>
 
-        <WorkspaceNav routes={routes} />
+        <WorkspaceNav routes={routes} unreadCount={unreadCount} />
 
         <div className="mt-auto flex items-center gap-3 border-t border-white/15 pt-5">
           <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white text-xs font-bold text-blue-700">
@@ -55,7 +56,7 @@ async function WorkspaceShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <WorkspaceTopbar initials={user.initials} />
+        <WorkspaceTopbar initials={user.initials} unreadCount={unreadCount} />
         <main className="flex-1 p-4 md:p-7">{children}</main>
       </div>
     </div>
