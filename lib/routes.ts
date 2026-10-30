@@ -13,11 +13,11 @@ export const workspaceRoutes = [
   { href: "/tasks", label: "Tasks" },
   { href: "/projects", label: "Projects" },
   { href: "/team", label: "Team" },
+  { href: "/messages", label: "Messages" },
   { href: "/calendar", label: "Calendar" },
   { href: "/meeting", label: "Meetings" },
   { href: "/availability", label: "Availability" },
   { href: "/notifications", label: "Notifications" },
-  { href: "/messages", label: "Messages" },
   {
     href: "/overview",
     label: "Management Overview",
