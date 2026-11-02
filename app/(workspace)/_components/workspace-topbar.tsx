@@ -5,16 +5,27 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { workspaceRoutes } from "@/lib/routes";
 
-export function WorkspaceTopbar({ initials, unreadCount }: { initials: string; unreadCount: number }) {
+export function WorkspaceTopbar({
+  initials,
+  unreadCount,
+  menu,
+}: {
+  initials: string;
+  unreadCount: number;
+  menu?: React.ReactNode;
+}) {
   const pathname = usePathname();
   const title =
     workspaceRoutes.find((r) => r.href === pathname)?.label ?? "Workspace";
 
   return (
     <header className="flex h-24 items-center justify-between gap-4 border-b border-white/15 px-4 md:px-7">
-      <div>
-        <p className="text-sm font-semibold text-white">{title}</p>
-        <p className="text-xs text-slate-400">LINK Team Hub workspace</p>
+      <div className="flex items-center gap-2">
+        {menu}
+        <div>
+          <p className="text-sm font-semibold text-white">{title}</p>
+          <p className="text-xs text-slate-400">LINK Team Hub workspace</p>
+        </div>
       </div>
 
       <div className="flex items-center gap-4">

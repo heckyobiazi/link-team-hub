@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { LogOut } from "lucide-react";
 import { LogoutLink } from "@kinde-oss/kinde-auth-nextjs/server";
 import { getCurrentUser, getUnreadNotificationCount, visibleRoutes } from "@/lib/auth";
+import { MobileMenu } from "./_components/mobile-menu";
 import { WorkspaceNav } from "./_components/workspace-nav";
 import { WorkspaceTopbar } from "./_components/workspace-topbar";
 
@@ -57,7 +58,30 @@ async function WorkspaceShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <WorkspaceTopbar initials={user.initials} unreadCount={unreadCount} />
+        <WorkspaceTopbar
+          initials={user.initials}
+          unreadCount={unreadCount}
+          menu={
+            <MobileMenu>
+              <WorkspaceNav routes={routes} unreadCount={unreadCount} />
+              <div className="mt-auto flex items-center gap-3 border-t border-white/15 pt-5">
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white text-xs font-bold text-blue-700">
+                  {user.initials}
+                </span>
+                <div className="min-w-0 flex-1 text-xs">
+                  <p className="truncate font-semibold text-white">{user.name}</p>
+                  <p className="text-slate-400">{roleLabels[user.role]}</p>
+                </div>
+                <LogoutLink
+                  aria-label="Sign out"
+                  className="text-slate-400 hover:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                >
+                  <LogOut aria-hidden className="size-4" />
+                </LogoutLink>
+              </div>
+            </MobileMenu>
+          }
+        />
         <main className="flex-1 p-4 md:p-7">{children}</main>
       </div>
     </div>
