@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ArrowRight, Check, X } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -112,7 +113,7 @@ export default function Home() {
   return (
     <main id="top" className="bg-black ">
       <header className="mx-auto flex w-full max-w-6xl items-start justify-between px-6 pt-8 sm:px-8">
-        <img src="/LINK Logo White.svg" alt="LINK Team Hub" className="h-8 w-auto" />
+        <Image src="/LINK Logo White.svg" alt="LINK Team Hub" width={1231} height={400} className="h-8 w-auto" />
         <nav aria-label="Account">
           <Button
             nativeButton={false}

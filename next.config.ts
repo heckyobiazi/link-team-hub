@@ -1,8 +1,21 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
 
+const siteUrl = process.env.KINDE_SITE_URL ?? (
+  process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000"
+);
+
 const nextConfig: NextConfig = {
   /* config options here */
+  env: {
+    KINDE_SITE_URL: siteUrl,
+    KINDE_POST_LOGIN_REDIRECT_URL:
+      process.env.KINDE_POST_LOGIN_REDIRECT_URL ?? `${siteUrl}/dashboard`,
+    KINDE_POST_LOGOUT_REDIRECT_URL:
+      process.env.KINDE_POST_LOGOUT_REDIRECT_URL ?? siteUrl,
+  },
   experimental: {
     agentFeedback: true,
   },

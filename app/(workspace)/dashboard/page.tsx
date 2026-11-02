@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
-import { and, count, desc, eq, max } from "drizzle-orm";
+import { and, count, desc, eq, max, sql } from "drizzle-orm";
 import { AlertCircle, CheckCircle2, FileCheck2, Users } from "lucide-react";
 import { db } from "@/lib/db";
 import { auditLogs, projects, reports, tasks, teamMembers } from "@/lib/db/schema";
@@ -34,7 +34,7 @@ async function DashboardContent() {
       .orderBy(desc(reports.submittedAt))
       .limit(4),
     db
-      .select({ id: teamMembers.id, name: teamMembers.name, jobTitle: teamMembers.jobTitle, availability: teamMembers.availability, lastActivityAt: activityByMember.lastActivityAt, updatedAt: teamMembers.updatedAt })
+      .select({ id: teamMembers.id, name: teamMembers.name, jobTitle: teamMembers.jobTitle, availability: teamMembers.availability, lastActivityAt: activityByMember.lastActivityAt, updatedAt: teamMembers.updatedAt, currentTime: sql<number>`floor(extract(epoch from now()) * 1000)::float8` })
       .from(teamMembers)
       .leftJoin(activityByMember, eq(teamMembers.id, activityByMember.actorId))
       .where(eq(teamMembers.isActive, true))
@@ -63,7 +63,7 @@ async function DashboardContent() {
     { label: "Tasks completed", value: doneCount[0].total, note: `Across ${taskCount[0].total} tasks`, icon: CheckCircle2 },
     { label: "Open blockers", value: blockedCount[0].total, note: "Tasks marked blocked", icon: AlertCircle },
   ];
-  const now = Date.now();
+  const now = availability[0]?.currentTime ?? 0;
   const availabilityMembers = availability.map((member) => ({
     id: member.id,
     name: member.name,

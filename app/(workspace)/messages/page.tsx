@@ -119,6 +119,7 @@ async function MessagesContent({ searchParams }: { searchParams: SearchParams })
         description="Chat directly, start a group, or talk with teammates who share your team focus."
       />
       <MessagingWorkspace
+        key={selectedConversation?.id ?? "new-conversation"}
         contacts={contacts}
         conversations={conversationSummaries}
         currentUserId={user.id}

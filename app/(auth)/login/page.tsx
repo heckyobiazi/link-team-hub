@@ -17,6 +17,7 @@ export default function LoginPage() {
         variant="glass"
       >
         <LoginLink
+          authUrlParams={{ prompt: "login" }}
           className={authButtonClass}
           postLoginRedirectURL="/dashboard"
         >

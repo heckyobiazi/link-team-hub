@@ -58,15 +58,6 @@ export function MessagingWorkspace({
   const [pending, startTransition] = useTransition();
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setConversations(initialConversations);
-  }, [initialConversations]);
-
-  useEffect(() => {
-    setActiveId(selectedConversationId);
-    setMessages(initialMessages);
-  }, [selectedConversationId, initialMessages]);
-
   const activeConversation = useMemo(
     () => conversations.find((conversation) => conversation.id === activeId) ?? null,
     [activeId, conversations],

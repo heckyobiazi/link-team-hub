@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { LogOut } from "lucide-react";
@@ -33,7 +34,7 @@ async function WorkspaceShell({ children }: { children: React.ReactNode }) {
         <Link
           className="flex items-center gap-3 px-1 pt-4 pb-2"
           href="/dashboard">
-          <img src="/LINK Logo White.svg" alt="LINK Team Hub" className="h-26 w-26" />
+          <Image src="/LINK Logo White.svg" alt="LINK Team Hub" width={1231} height={400} className="h-26 w-26" />
         </Link>
 
         <WorkspaceNav routes={routes} unreadCount={unreadCount} />

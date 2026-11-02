@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export function AuthCard({
@@ -21,7 +22,7 @@ export function AuthCard({
       <Link
         className="inline-flex items-baseline gap-2 text-2xl font-bold tracking-tighter text-blue-700"
         href="/">
-        <img src="/LINK Logo White.svg" alt="LINK Team Hub" className="h-8 w-auto" />
+        <Image src="/LINK Logo White.svg" alt="LINK Team Hub" width={1231} height={400} className="h-8 w-auto" />
       </Link>
       <h1 className="mt-8 mb-2 text-white text-3xl leading-tight font-semibold tracking-tight">
         {title}
